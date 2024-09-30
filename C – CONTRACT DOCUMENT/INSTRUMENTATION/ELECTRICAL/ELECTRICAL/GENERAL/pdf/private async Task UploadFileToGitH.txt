@@ -1,0 +1,113 @@
+   private async Task UploadFileToGitHub(string fileName, string fileContent)
+   {
+       try
+       {
+           // Check if the repository and branch exist
+           var branchRef = await client.Git.Reference.Get(owner, repo, $"heads/{branch}");
+           var latestCommit = await client.Git.Commit.Get(owner, repo, branchRef.Object.Sha);
+
+           // Ensure the file content is valid
+           if (string.IsNullOrWhiteSpace(fileContent))
+           {
+               MessageBox.Show("File content is empty!");
+               return;
+           }
+
+           // Validate folder selections
+           if (string.IsNullOrWhiteSpace(cmbFolderMain.Text) ||
+               string.IsNullOrWhiteSpace(cmbFolderSub1.Text) ||
+               string.IsNullOrWhiteSpace(cmbFolderSub2.Text) ||
+               string.IsNullOrWhiteSpace(cmbFolderSub3.Text) ||
+               string.IsNullOrWhiteSpace(cmbFolderSub4.Text))
+           {
+               MessageBox.Show("Please select all folder levels.");
+               return;
+           }
+
+           // Build the full path for the file
+           string fullPath = BuildGitHubPath(fileName);
+
+           // Check for path length
+           if (fullPath.Length > 255)
+           {
+               MessageBox.Show("The total path length exceeds the allowed limit.");
+               return;
+           }
+
+           // Create a new blob with the file content
+           var newBlob = new NewBlob
+           {
+               Content = fileContent,
+               Encoding = EncodingType.Utf8
+           };
+
+           // Create the blob
+           var blobRef = await client.Git.Blob.Create(owner, repo, newBlob);
+
+           // Create a new tree entry for the file
+           var newTree = new NewTree { BaseTree = latestCommit.Tree.Sha };
+
+           // Add the new tree item
+           newTree.Tree.Add(new NewTreeItem
+           {
+               Path = fullPath.Trim('/'),
+               Mode = "100644",
+               Type = TreeType.Blob,
+               Sha = blobRef.Sha
+           });
+
+           // Create the tree and commit the changes
+           var newTreeSha = await client.Git.Tree.Create(owner, repo, newTree);
+           var newCommit = new NewCommit($"Upload {fileName}", newTreeSha.Sha, latestCommit.Sha);
+           var commit = await client.Git.Commit.Create(owner, repo, newCommit);
+
+           // Update the branch reference with the new commit
+           await client.Git.Reference.Update(owner, repo, $"heads/{branch}", new ReferenceUpdate(commit.Sha));
+
+           // Generate the GitHub file link including folder path
+           string fileLink = $"https://github.com/{owner}/{repo}/blob/{branch}/{fullPath}".Trim('/');
+
+           lnklblFileLink.Text = fileLink;
+           lnklblFileLink.Refresh();
+
+           MessageBox.Show("File uploaded to GitHub successfully! You can view the file at the link provided.");
+
+       }
+       catch (NotFoundException nfEx)
+       {
+           MessageBox.Show($"Resource not found: {nfEx.Message}");
+       }
+       catch (AuthorizationException authEx)
+       {
+           MessageBox.Show($"Authorization error: {authEx.Message}");
+       }
+       catch (Exception ex)
+       {
+           MessageBox.Show($"Error uploading file: {ex.Message}");
+       }
+   }
+
+   private string BuildGitHubPath(string fileName)
+   {
+       // Construct the folder path
+       var folderPath = $"{cmbFolderMain.Text}/{cmbFolderSub1.Text}/{cmbFolderSub2.Text}/{cmbFolderSub3.Text}/{cmbFolderSub4.Text}".Trim('/');
+       return $"{folderPath}/{fileName}".Trim('/');
+   }
+
+   // This method can be used later to open the link when the user decides to do so
+   private void OpenFileLink()
+   {
+       string fileLink = lnklblFileLink.Text;
+       if (!string.IsNullOrWhiteSpace(fileLink))
+       {
+           System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+           {
+               FileName = fileLink,
+               UseShellExecute = true
+           });
+       }
+       else
+       {
+           MessageBox.Show("No file link available to open.");
+       }
+   }
