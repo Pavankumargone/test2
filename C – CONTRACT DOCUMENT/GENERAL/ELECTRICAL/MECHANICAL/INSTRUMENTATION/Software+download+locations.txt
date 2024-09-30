@@ -1,0 +1,20 @@
+
+
+https://www.microsoft.com/en-us/software-download/windows10
+
+https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2017InstallerProjects
+
+https://www.tektutorialshub.com/crystal-reports/download-crystal-reports-for-visual-studio-2019/
+
+https://www.mediafire.com/file/flla38w36lvec29/en_sql_server_2014_enterprise_edition_x64_dvd_3932700.iso/file
+
+https://visualstudio.microsoft.com/downloads/
+
+
+LINK FOR DESKTOP APPLICATION COURSE
+
+https://www.udemy.com/course/desktop-application-development-windows-forms-c/?referralCode=0B5AC523CF9030DD650A
+
+LINK FOR SQL SERVER COURSE
+
+https://www.udemy.com/course/learn-microsoft-t-sql-from-scratch/?referralCode=AFC9081631487C8ABA68
